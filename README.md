@@ -1,0 +1,2 @@
+# PyApriori
+Python apriori package.
