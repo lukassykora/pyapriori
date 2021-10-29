@@ -1,4 +1,5 @@
 """Top-level package for PyApriori."""
+from pyapriori import utils
 
 __author__ = """Lukas Sykora"""
 __email__ = 'lukassykora@seznam.cz'
