@@ -4,10 +4,10 @@
 
 from setuptools import setup, find_packages
 
-with open('README.md') as readme_file:
+with open('README.rst') as readme_file:
     readme = readme_file.read()
 
-with open('HISTORY.md') as history_file:
+with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [ ]
@@ -28,7 +28,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    description="A Fast Apriori Package",
+    description="Python Implementation of Apriori Algorithm for Frequent Itemsets Mining.",
     install_requires=requirements,
     license="MIT license",
     long_description=readme + '\n\n' + history,

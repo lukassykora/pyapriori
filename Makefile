@@ -49,8 +49,10 @@ clean-test: ## remove test and coverage artifacts
 
 lint/flake8: ## check style with flake8
 	flake8 pyapriori tests
+lint/black: ## check style with black
+	black --check pyapriori tests
 
-lint: lint/flake8 ## check style
+lint: lint/flake8 lint/black ## check style
 
 test: ## run tests quickly with the default Python
 	pytest
