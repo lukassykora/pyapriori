@@ -3,13 +3,26 @@
 """Tests for `pyapriori` package."""
 
 import unittest
-from pyapriori import PyApriori
+from parameterized import parameterized
 import numpy as np
+import cupy as cp
+from scipy.sparse import csr_matrix
+from scipy.sparse import csc_matrix
+from cupyx.scipy.sparse import csr_matrix as cupy_csr_matrix
+from pyapriori import PyApriori
+from pyapriori.utils.utils import get_numpy_or_cupy
 
 
 class TestPyApriori(unittest.TestCase):
-    def test_pyapriori_numpy_array(self):
-        transactions = np.array([
+    @parameterized.expand([
+        (np.array,),
+        (cp.array,),
+        (csr_matrix,),
+        (csc_matrix,),
+        (lambda x: cupy_csr_matrix(csr_matrix(x)),),
+    ])
+    def test_pyapriori(self, type_array):
+        transactions = [
             [True, True, True, False, False, False],
             [True, True, True, False, False, False],
             [True, True, True, False, False, False],
@@ -17,9 +30,11 @@ class TestPyApriori(unittest.TestCase):
             [True, False, False, False, True, True],
             [True, True, True, False, False, False],
             [True, True, True, False, False, False],
-        ])
+        ]
+        data_transactions = type_array(transactions)
+        numpy_or_cupy = get_numpy_or_cupy(data_transactions)
         py_apriori = PyApriori(2, 2)
-        itemsets, support = py_apriori.fit(transactions)
+        itemsets, support = py_apriori.fit(data_transactions)
 
         expected_itemsets = np.array(
             [
@@ -31,6 +46,6 @@ class TestPyApriori(unittest.TestCase):
         )
         self.assertTrue(np.array_equal(expected_itemsets, itemsets))
 
-        expected_support = np.array([5, 5, 6, 5])
-        self.assertTrue(np.array_equal(expected_support, support))
+        expected_support = numpy_or_cupy.array([5, 5, 6, 5])
+        self.assertTrue(numpy_or_cupy.array_equal(expected_support, support))
 

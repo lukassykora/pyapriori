@@ -111,7 +111,10 @@ def min_support_set(candidates: np.ndarray, candidates_support:MultiDimensionalA
 
     data = data[:,over_support_mask]
     candidates_support = candidates_support[over_support_mask]
-    candidates = candidates[over_support_mask]
+    if isinstance(over_support_mask, cp.ndarray):
+        candidates = candidates[cp.asnumpy(over_support_mask)]
+    else:
+        candidates = candidates[over_support_mask]
     multiplier_mask_left = numpy_or_cupy.array(multiplier_mask_left)[over_support_mask].tolist()
 
     return candidates, candidates_support, multiplier_mask_left, data

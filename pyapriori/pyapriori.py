@@ -1,5 +1,5 @@
 """Main module."""
-from pyapriori.utils.utils import frequent_single_itemsets, generate_candidates, itemsets_support, min_support_set, Data
+from pyapriori.utils.utils import frequent_single_itemsets, generate_candidates, itemsets_support, min_support_set, Data, get_numpy_or_cupy
 import numpy as np
 
 class PyApriori:
@@ -9,6 +9,7 @@ class PyApriori:
         self.min_length = min_length
 
     def fit(self, data: Data) -> tuple:
+        numpy_or_cupy = get_numpy_or_cupy(data)
         candidates, candidates_support, data = frequent_single_itemsets(data, self.min_support)
         k = 2
         multiplier_mask_left = None
@@ -28,7 +29,7 @@ class PyApriori:
             if k >= self.min_length:
                 if result is not None:
                     result = np.concatenate((result, candidates), axis=0)
-                    result_support = np.concatenate((result_support, candidates_support), axis=0)
+                    result_support = numpy_or_cupy.concatenate((result_support, candidates_support), axis=0)
                 else:
                     result = candidates
                     result_support = candidates_support
