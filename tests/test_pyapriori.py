@@ -48,4 +48,3 @@ class TestPyApriori(unittest.TestCase):
 
         expected_support = numpy_or_cupy.array([5, 5, 6, 5])
         self.assertTrue(numpy_or_cupy.array_equal(expected_support, support))
-

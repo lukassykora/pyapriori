@@ -1,6 +1,8 @@
 """Main module."""
-from pyapriori.utils.utils import frequent_single_itemsets, generate_candidates, itemsets_support, min_support_set, Data, get_numpy_or_cupy
+from pyapriori.utils.utils import frequent_single_itemsets, generate_candidates, itemsets_support, min_support_set, \
+    Data, get_numpy_or_cupy
 import numpy as np
+
 
 class PyApriori:
     """ """
@@ -15,7 +17,7 @@ class PyApriori:
         Parameters
         ----------
         data: Data :
-            
+
 
         Returns
         -------
@@ -31,12 +33,15 @@ class PyApriori:
             result = candidates
             result_support = candidates_support
         while candidates.size > 0:
-            candidates, multiplier_mask_left, multiplier_mask_right = generate_candidates(candidates, k, multiplier_mask_left)
+            candidates, multiplier_mask_left, multiplier_mask_right = generate_candidates(candidates, k,
+                                                                                          multiplier_mask_left)
             if candidates.size == 0:
                 break
 
             data, candidates_support = itemsets_support(data, multiplier_mask_left, multiplier_mask_right)
-            candidates, candidates_support, multiplier_mask_left, data = min_support_set(candidates, candidates_support, data, multiplier_mask_left, self.min_support)
+            candidates, candidates_support, multiplier_mask_left, data = min_support_set(candidates, candidates_support,
+                                                                                         data, multiplier_mask_left,
+                                                                                         self.min_support)
 
             if k >= self.min_length:
                 if result is not None:
