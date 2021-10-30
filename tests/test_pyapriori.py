@@ -2,23 +2,35 @@
 
 """Tests for `pyapriori` package."""
 
-import pytest
+import unittest
+from pyapriori import PyApriori
+import numpy as np
 
 
-from pyapriori import pyapriori
+class TestPyApriori(unittest.TestCase):
+    def test_pyapriori_numpy_array(self):
+        transactions = np.array([
+            [True, True, True, False, False, False],
+            [True, True, True, False, False, False],
+            [True, True, True, False, False, False],
+            [True, True, False, True, False, False],
+            [True, False, False, False, True, True],
+            [True, True, True, False, False, False],
+            [True, True, True, False, False, False],
+        ])
+        py_apriori = PyApriori(2, 2)
+        itemsets, support = py_apriori.fit(transactions)
 
+        expected_itemsets = np.array(
+            [
+                {1, 2},
+                {0, 2},
+                {0, 1},
+                {0, 1, 2}
+            ]
+        )
+        self.assertTrue(np.array_equal(expected_itemsets, itemsets))
 
-@pytest.fixture
-def response():
-    """Sample pytest fixture.
+        expected_support = np.array([5, 5, 6, 5])
+        self.assertTrue(np.array_equal(expected_support, support))
 
-    See more at: http://doc.pytest.org/en/latest/fixture.html
-    """
-    # import requests
-    # return requests.get('https://github.com/audreyr/cookiecutter-pypackage')
-
-
-def test_content(response):
-    """Sample pytest test function with the pytest fixture as an argument."""
-    # from bs4 import BeautifulSoup
-    # assert 'GitHub' in BeautifulSoup(response.content).title.string
