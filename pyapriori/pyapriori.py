@@ -3,12 +3,24 @@ from pyapriori.utils.utils import frequent_single_itemsets, generate_candidates,
 import numpy as np
 
 class PyApriori:
+    """ """
 
     def __init__(self, min_support: int = 2, min_length: int = 2):
         self.min_support = min_support
         self.min_length = min_length
 
     def fit(self, data: Data) -> tuple:
+        """
+
+        Parameters
+        ----------
+        data: Data :
+            
+
+        Returns
+        -------
+
+        """
         numpy_or_cupy = get_numpy_or_cupy(data)
         candidates, candidates_support, data = frequent_single_itemsets(data, self.min_support)
         k = 2

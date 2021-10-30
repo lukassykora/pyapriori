@@ -12,13 +12,42 @@ MultiDimensionalArray = Union[np.ndarray, cp.ndarray]
 
 
 def get_support(data: Data, numpy_or_cupy: types.ModuleType('numpy', 'cupy')) -> MultiDimensionalArray:
+    """
+
+    Parameters
+    ----------
+    data: Data :
+        
+    numpy_or_cupy: types.ModuleType('numpy' :
+        
+    'cupy') :
+        
+
+    Returns
+    -------
+
+    """
     if isinstance(data, (csr_matrix, csc_matrix, cupy_csr_matrix)):
         return numpy_or_cupy.array(data.sum(axis=0)).ravel()
     return data.sum(axis=0)
 
 
 def frequent_single_itemsets(data: Data, min_support: int = 0) -> Tuple[np.ndarray, MultiDimensionalArray, Data]:
-    """Return one-item itemsets with at least `support` support."""
+    """
+
+    Parameters
+    ----------
+    data: Data :
+        
+    min_support: int :
+         (Default value = 0)
+
+    Returns
+    -------
+    type
+        
+
+    """
     numpy_or_cupy = get_numpy_or_cupy(data)
 
     if isinstance(data, cupy_csr_matrix):
@@ -47,12 +76,39 @@ def frequent_single_itemsets(data: Data, min_support: int = 0) -> Tuple[np.ndarr
 
 
 def get_numpy_or_cupy(data: Data) -> types.ModuleType('numpy', 'cupy'):
+    """
+
+    Parameters
+    ----------
+    data: Data) -> types.ModuleType('numpy' :
+        
+    'cupy' :
+        
+
+    Returns
+    -------
+
+    """
     if isinstance(data, (cupy_csr_matrix, cp.ndarray)):
         return cp
     return np
 
 def generate_candidates(previous_candidates: np.ndarray, k: int, previous_multiplier_mask: List[int] = None) -> Tuple[np.ndarray, List[int], List[int]]:
-    """Generate candidate set from `previous_candidates` with size `k`"""
+    """Generate candidate set from `previous_candidates` with size `k`
+
+    Parameters
+    ----------
+    previous_candidates: np.ndarray :
+        
+    k: int :
+        
+    previous_multiplier_mask: List[int] :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
 
     # number of previous candidates
     d = len(previous_candidates)
@@ -92,7 +148,21 @@ def generate_candidates(previous_candidates: np.ndarray, k: int, previous_multip
     return candidates, multiplier_mask_left, multiplier_mask_right
 
 def itemsets_support(data: Data, multiplier_mask_left: List[int], multiplier_mask_right: List[int]) -> Tuple[Data, MultiDimensionalArray]:
-    """Get support for `itemsets` and return sets with minimal `support"""
+    """Get support for `itemsets` and return sets with minimal `support
+
+    Parameters
+    ----------
+    data: Data :
+        
+    multiplier_mask_left: List[int] :
+        
+    multiplier_mask_right: List[int] :
+        
+
+    Returns
+    -------
+
+    """
 
     if isinstance(data, (csr_matrix, csc_matrix, cupy_csr_matrix)):
         data = data[:, multiplier_mask_left].multiply(data[:, multiplier_mask_right])
@@ -104,7 +174,27 @@ def itemsets_support(data: Data, multiplier_mask_left: List[int], multiplier_mas
 
 
 def min_support_set(candidates: np.ndarray, candidates_support:MultiDimensionalArray, data: Data, multiplier_mask_left:List[int], min_support: int = 0)-> Tuple[np.ndarray, MultiDimensionalArray, List[int], Data]:
-    """Return sets with minimal `support`"""
+    """
+
+    Parameters
+    ----------
+    candidates: np.ndarray :
+        
+    candidates_support:MultiDimensionalArray :
+        
+    data: Data :
+        
+    multiplier_mask_left:List[int] :
+        
+    min_support: int :
+         (Default value = 0)
+
+    Returns
+    -------
+    type
+        
+
+    """
     numpy_or_cupy = get_numpy_or_cupy(data)
 
     over_support_mask = candidates_support >= min_support
