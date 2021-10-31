@@ -12,7 +12,7 @@ MultiDimensionalArray = Union[np.ndarray, cp.ndarray]
 
 
 def get_support(data: Data, numpy_or_cupy: types.ModuleType('numpy', 'cupy')) -> MultiDimensionalArray:
-    """
+    """Get support
 
     Parameters
     ----------
@@ -98,15 +98,13 @@ def get_numpy_or_cupy(data: Data) -> types.ModuleType('numpy', 'cupy'):
     return np
 
 
-def generate_candidates(previous_candidates: MultiDimensionalArray, k: int,
-                        previous_multiplier_mask: List[int] = None) -> Tuple[List[int], List[int]]:
+def generate_candidates(previous_candidates: MultiDimensionalArray, previous_multiplier_mask: List[int] = None) -> \
+    Tuple[List[int], List[int]]:
     """Generate candidate set from `previous_candidates` with size `k`
 
     Parameters
     ----------
     previous_candidates: np.ndarray :
-
-    k: int :
 
     previous_multiplier_mask: List[int] :
          (Default value = None)
@@ -183,7 +181,7 @@ def min_support_set(previous_candidates: np.ndarray, candidates_support: MultiDi
 
     Parameters
     ----------
-    candidates: np.ndarray :
+    previous_candidates: np.ndarray :
 
     candidates_support:MultiDimensionalArray :
 

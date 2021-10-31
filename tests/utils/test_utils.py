@@ -56,7 +56,7 @@ class TestUtils(unittest.TestCase):
     ])
     def test_generate_candidates(self, previous_candidates, previous_multiplier_mask, expected_multiplier_mask_left, expected_multiplier_mask_right):
 
-        multiplier_mask_left, multiplier_mask_right = utils.generate_candidates(previous_candidates, 2, previous_multiplier_mask)
+        multiplier_mask_left, multiplier_mask_right = utils.generate_candidates(previous_candidates, previous_multiplier_mask)
 
         np.testing.assert_array_equal(expected_multiplier_mask_left, multiplier_mask_left)
         np.testing.assert_array_equal(expected_multiplier_mask_right, multiplier_mask_right)
