@@ -32,7 +32,8 @@ def get_support(data: Data, numpy_or_cupy: types.ModuleType('numpy', 'cupy')) ->
     return data.sum(axis=0)
 
 
-def frequent_single_itemsets(data: Data, min_support: int = 0) -> Tuple[np.ndarray, MultiDimensionalArray, Data]:
+def frequent_single_itemsets(data: Data, min_support: int = 0) -> Tuple[
+    MultiDimensionalArray, MultiDimensionalArray, Data]:
     """
 
     Parameters
@@ -66,13 +67,16 @@ def frequent_single_itemsets(data: Data, min_support: int = 0) -> Tuple[np.ndarr
     reduced_indices_sorted = reduced_indices[support_sorted_mask]
     reduced_columns_support_sorted = reduced_columns_support[support_sorted_mask]
 
+    # Indices Matrix
+    matrix_size = len(over_support_mask)
+    indices_matrix = numpy_or_cupy.zeros((matrix_size, matrix_size))
+    numpy_or_cupy.fill_diagonal(indices_matrix, 1)
+    indices_matrix = indices_matrix[reduced_indices_sorted].astype(bool)
+
     # Reduce data
     data = data[:, reduced_indices_sorted]
 
-    # Return sets
-    reduced_indices_sorted_sets = np.array([{int(i)} for i in reduced_indices_sorted])
-
-    return reduced_indices_sorted_sets, reduced_columns_support_sorted, data
+    return indices_matrix, reduced_columns_support_sorted, data
 
 
 def get_numpy_or_cupy(data: Data) -> types.ModuleType('numpy', 'cupy'):
@@ -94,8 +98,8 @@ def get_numpy_or_cupy(data: Data) -> types.ModuleType('numpy', 'cupy'):
     return np
 
 
-def generate_candidates(previous_candidates: np.ndarray, k: int, previous_multiplier_mask: List[int] = None) -> Tuple[
-    np.ndarray, List[int], List[int]]:
+def generate_candidates(previous_candidates: MultiDimensionalArray, k: int,
+                        previous_multiplier_mask: List[int] = None) -> Tuple[List[int], List[int]]:
     """Generate candidate set from `previous_candidates` with size `k`
 
     Parameters
@@ -113,11 +117,11 @@ def generate_candidates(previous_candidates: np.ndarray, k: int, previous_multip
     """
 
     # number of previous candidates
-    d = len(previous_candidates)
+    d = previous_candidates.shape[0]
 
     # If no previous candidates then return empty arrays
     if d <= 1:
-        return np.array([]), [], []
+        return [], []
 
     if previous_multiplier_mask is None:  # Generate candidates with size 2
         perm = combinations(range(0, d), 2)
@@ -132,7 +136,7 @@ def generate_candidates(previous_candidates: np.ndarray, k: int, previous_multip
         multiplier_mask_left = []
         multiplier_mask_right = []
         if len(count_arr) == 0:
-            return np.array([]), [], []
+            return [], []
         for i, count in enumerate(count_arr):
             if count == 1:
                 continue
@@ -142,12 +146,7 @@ def generate_candidates(previous_candidates: np.ndarray, k: int, previous_multip
             multiplier_mask_left += multiplier_mask_left_part
             multiplier_mask_right += multiplier_mask_right_part
 
-    if len(multiplier_mask_left) == 0:
-        return np.array([]), [], []
-    else:  # Generate new candidates by union
-        candidates = previous_candidates[multiplier_mask_left] | previous_candidates[multiplier_mask_right]
-
-    return candidates, multiplier_mask_left, multiplier_mask_right
+    return multiplier_mask_left, multiplier_mask_right
 
 
 def itemsets_support(data: Data, multiplier_mask_left: List[int], multiplier_mask_right: List[int]) -> Tuple[
@@ -177,9 +176,9 @@ def itemsets_support(data: Data, multiplier_mask_left: List[int], multiplier_mas
     return data, data_support
 
 
-def min_support_set(candidates: np.ndarray, candidates_support: MultiDimensionalArray, data: Data,
-                    multiplier_mask_left: List[int], min_support: int = 0) -> Tuple[
-    np.ndarray, MultiDimensionalArray, List[int], Data]:
+def min_support_set(previous_candidates: np.ndarray, candidates_support: MultiDimensionalArray, data: Data,
+                    multiplier_mask_left: List[int], multiplier_mask_right: List[int], min_support: int = 0) -> Tuple[
+    MultiDimensionalArray, MultiDimensionalArray, List[int], Data]:
     """
 
     Parameters
@@ -191,6 +190,8 @@ def min_support_set(candidates: np.ndarray, candidates_support: MultiDimensional
     data: Data :
 
     multiplier_mask_left:List[int] :
+
+    multiplier_mask_right:List[int] :
 
     min_support: int :
          (Default value = 0)
@@ -207,10 +208,8 @@ def min_support_set(candidates: np.ndarray, candidates_support: MultiDimensional
 
     data = data[:, over_support_mask]
     candidates_support = candidates_support[over_support_mask]
-    if isinstance(over_support_mask, cp.ndarray):
-        candidates = candidates[cp.asnumpy(over_support_mask)]
-    else:
-        candidates = candidates[over_support_mask]
     multiplier_mask_left = numpy_or_cupy.array(multiplier_mask_left)[over_support_mask].tolist()
+    multiplier_mask_right = numpy_or_cupy.array(multiplier_mask_right)[over_support_mask].tolist()
 
+    candidates = previous_candidates[multiplier_mask_left, :] + previous_candidates[multiplier_mask_right, :]
     return candidates, candidates_support, multiplier_mask_left, data

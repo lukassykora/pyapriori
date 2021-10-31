@@ -36,15 +36,15 @@ class TestPyApriori(unittest.TestCase):
         py_apriori = PyApriori(2, 2)
         itemsets, support = py_apriori.fit(data_transactions)
 
-        expected_itemsets = np.array(
+        expected_itemsets = numpy_or_cupy.array(
             [
-                {1, 2},
-                {0, 2},
-                {0, 1},
-                {0, 1, 2}
+                [False, True, True, False, False, False],
+                [True, False, True, False, False, False],
+                [True, True, False, False, False, False],
+                [True, True, True, False, False, False],
             ]
         )
-        self.assertTrue(np.array_equal(expected_itemsets, itemsets))
+        numpy_or_cupy.testing.assert_array_equal(expected_itemsets, itemsets)
 
         expected_support = numpy_or_cupy.array([5, 5, 6, 5])
-        self.assertTrue(numpy_or_cupy.array_equal(expected_support, support))
+        numpy_or_cupy.testing.assert_array_equal(expected_support, support)
