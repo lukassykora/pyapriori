@@ -1,17 +1,18 @@
-from typing import Union, Tuple, List
-import types
+from types import ModuleType
 from itertools import combinations
-import numpy as np
+from typing import Union, Tuple, List
+
 import cupy as cp
-from scipy.sparse import csr_matrix
-from scipy.sparse import csc_matrix
+import numpy as np
 from cupyx.scipy.sparse import csr_matrix as cupy_csr_matrix
+from scipy.sparse import csc_matrix
+from scipy.sparse import csr_matrix
 
 Data = Union[np.ndarray, cp.ndarray, csr_matrix, csc_matrix, cupy_csr_matrix]
 MultiDimensionalArray = Union[np.ndarray, cp.ndarray]
 
 
-def get_support(data: Data, numpy_or_cupy: types.ModuleType('numpy', 'cupy')) -> MultiDimensionalArray:
+def get_support(data: Data, numpy_or_cupy: ModuleType) -> MultiDimensionalArray:
     """Get support
 
     Parameters
@@ -32,8 +33,9 @@ def get_support(data: Data, numpy_or_cupy: types.ModuleType('numpy', 'cupy')) ->
     return data.sum(axis=0)
 
 
-def frequent_single_itemsets(data: Data, min_support: int = 0) -> Tuple[
-    MultiDimensionalArray, MultiDimensionalArray, Data]:
+def frequent_single_itemsets(
+    data: Data, min_support: int = 0
+) -> Tuple[MultiDimensionalArray, MultiDimensionalArray, Data]:
     """
 
     Parameters
@@ -79,7 +81,7 @@ def frequent_single_itemsets(data: Data, min_support: int = 0) -> Tuple[
     return indices_matrix, reduced_columns_support_sorted, data
 
 
-def get_numpy_or_cupy(data: Data) -> types.ModuleType('numpy', 'cupy'):
+def get_numpy_or_cupy(data: Data) -> ModuleType:
     """
 
     Parameters
@@ -98,8 +100,10 @@ def get_numpy_or_cupy(data: Data) -> types.ModuleType('numpy', 'cupy'):
     return np
 
 
-def generate_candidates(previous_candidates: MultiDimensionalArray, previous_multiplier_mask: List[int] = None) -> \
-    Tuple[List[int], List[int]]:
+def generate_candidates(
+    previous_candidates: MultiDimensionalArray,
+    previous_multiplier_mask: List[int] = None,
+) -> Tuple[List[int], List[int]]:
     """Generate candidate set from `previous_candidates` with size `k`
 
     Parameters
@@ -140,15 +144,18 @@ def generate_candidates(previous_candidates: MultiDimensionalArray, previous_mul
                 continue
             offset = cum_n[i]
             perm = combinations(range(offset, offset + count), 2)
-            multiplier_mask_left_part, multiplier_mask_right_part = map(list, zip(*perm))
+            multiplier_mask_left_part, multiplier_mask_right_part = map(
+                list, zip(*perm)
+            )
             multiplier_mask_left += multiplier_mask_left_part
             multiplier_mask_right += multiplier_mask_right_part
 
     return multiplier_mask_left, multiplier_mask_right
 
 
-def itemsets_support(data: Data, multiplier_mask_left: List[int], multiplier_mask_right: List[int]) -> Tuple[
-    Data, MultiDimensionalArray]:
+def itemsets_support(
+    data: Data, multiplier_mask_left: List[int], multiplier_mask_right: List[int]
+) -> Tuple[Data, MultiDimensionalArray]:
     """Get support for `itemsets` and return sets with minimal `support
 
     Parameters
@@ -174,9 +181,14 @@ def itemsets_support(data: Data, multiplier_mask_left: List[int], multiplier_mas
     return data, data_support
 
 
-def min_support_set(previous_candidates: np.ndarray, candidates_support: MultiDimensionalArray, data: Data,
-                    multiplier_mask_left: List[int], multiplier_mask_right: List[int], min_support: int = 0) -> Tuple[
-    MultiDimensionalArray, MultiDimensionalArray, List[int], Data]:
+def min_support_set(
+    previous_candidates: np.ndarray,
+    candidates_support: MultiDimensionalArray,
+    data: Data,
+    multiplier_mask_left: List[int],
+    multiplier_mask_right: List[int],
+    min_support: int = 0,
+) -> Tuple[MultiDimensionalArray, MultiDimensionalArray, List[int], Data]:
     """
 
     Parameters
@@ -206,8 +218,15 @@ def min_support_set(previous_candidates: np.ndarray, candidates_support: MultiDi
 
     data = data[:, over_support_mask]
     candidates_support = candidates_support[over_support_mask]
-    multiplier_mask_left = numpy_or_cupy.array(multiplier_mask_left)[over_support_mask].tolist()
-    multiplier_mask_right = numpy_or_cupy.array(multiplier_mask_right)[over_support_mask].tolist()
+    multiplier_mask_left = numpy_or_cupy.array(multiplier_mask_left)[
+        over_support_mask
+    ].tolist()
+    multiplier_mask_right = numpy_or_cupy.array(multiplier_mask_right)[
+        over_support_mask
+    ].tolist()
 
-    candidates = previous_candidates[multiplier_mask_left, :] + previous_candidates[multiplier_mask_right, :]
+    candidates = (
+        previous_candidates[multiplier_mask_left, :]
+        + previous_candidates[multiplier_mask_right, :]
+    )
     return candidates, candidates_support, multiplier_mask_left, data

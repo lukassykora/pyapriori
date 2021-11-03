@@ -3,24 +3,28 @@
 """Tests for `pyapriori` package."""
 
 import unittest
-from parameterized import parameterized
-import numpy as np
+
 import cupy as cp
-from scipy.sparse import csr_matrix
-from scipy.sparse import csc_matrix
+import numpy as np
 from cupyx.scipy.sparse import csr_matrix as cupy_csr_matrix
+from parameterized import parameterized
+from scipy.sparse import csc_matrix
+from scipy.sparse import csr_matrix
+
 from pyapriori import PyApriori
 from pyapriori.utils.utils import get_numpy_or_cupy
 
 
 class TestPyApriori(unittest.TestCase):
-    @parameterized.expand([
-        (np.array,),
-        (cp.array,),
-        (csr_matrix,),
-        (csc_matrix,),
-        (lambda x: cupy_csr_matrix(csr_matrix(x)),),
-    ])
+    @parameterized.expand(
+        [
+            (np.array,),
+            (cp.array,),
+            (csr_matrix,),
+            (csc_matrix,),
+            (lambda x: cupy_csr_matrix(csr_matrix(x)),),
+        ]
+    )
     def test_pyapriori(self, type_array):
         transactions = [
             [True, True, True, False, False, False],
