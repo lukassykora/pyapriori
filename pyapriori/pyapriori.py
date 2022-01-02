@@ -30,7 +30,7 @@ class PyApriori:
         """
         numpy_or_cupy = get_numpy_or_cupy(data)
 
-        candidates, candidates_support, data = frequent_single_itemsets(
+        candidates, candidates_support, data, counts = frequent_single_itemsets(
             data, self.min_support
         )
         k = 2
@@ -47,7 +47,7 @@ class PyApriori:
             if len(multiplier_mask_left) == 0:
                 break
             data, candidates_support = itemsets_support(
-                data, multiplier_mask_left, multiplier_mask_right
+                data, multiplier_mask_left, multiplier_mask_right, counts
             )
             (
                 candidates,

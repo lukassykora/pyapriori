@@ -31,9 +31,16 @@ class TestUtils(unittest.TestCase):
             [True, True, True, False, False, False],
         ]
         data_transactions = type_array(transactions)
-        itemsets, support, data = utils.frequent_single_itemsets(data_transactions, 2)
+        itemsets, support, data, counts = utils.frequent_single_itemsets(
+            data_transactions, 2
+        )
 
-        self.assertEqual((7, 3), data.shape)
+        if isinstance(data, (cp.ndarray, np.ndarray)):
+            self.assertEqual((3, 3), data.shape)
+            self.assertEqual(3, len(counts))
+        else:
+            self.assertEqual((7, 3), data.shape)
+            self.assertIsNone(counts)
         self.assertEqual(type(data_transactions), type(data))
         self.assertEqual(3, len(itemsets))
         self.assertEqual(3, len(support))

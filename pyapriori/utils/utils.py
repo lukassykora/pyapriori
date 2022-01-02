@@ -12,7 +12,9 @@ Data = Union[np.ndarray, cp.ndarray, csr_matrix, csc_matrix, cupy_csr_matrix]
 MultiDimensionalArray = Union[np.ndarray, cp.ndarray]
 
 
-def get_support(data: Data, numpy_or_cupy: ModuleType) -> MultiDimensionalArray:
+def get_support(
+    data: Data, numpy_or_cupy: ModuleType, counts: MultiDimensionalArray = None
+) -> MultiDimensionalArray:
     """Get support
 
     Parameters
@@ -23,19 +25,43 @@ def get_support(data: Data, numpy_or_cupy: ModuleType) -> MultiDimensionalArray:
 
     'cupy') :
 
+    counts: MultiDimensionalArray :
+         (Default value = None)
+
 
     Returns
     -------
 
     """
-    if isinstance(data, (csr_matrix, csc_matrix, cupy_csr_matrix)):
-        return numpy_or_cupy.array(data.sum(axis=0)).ravel()
-    return data.sum(axis=0)
+    if counts is not None:
+        data_support = data * counts[..., None]
+    else:
+        data_support = data
+
+    if isinstance(data_support, (csr_matrix, csc_matrix, cupy_csr_matrix)):
+        return numpy_or_cupy.array(data_support.sum(axis=0)).ravel()
+    return data_support.sum(axis=0)
+
+
+def cupy_unique_axis_0_return_counts_true(
+    array: MultiDimensionalArray,
+) -> Tuple[MultiDimensionalArray, MultiDimensionalArray]:
+    sortarr = array[cp.lexsort(array.T[::-1])]
+    mask = cp.empty(array.shape[0], dtype=cp.bool_)
+    mask[0] = True
+    mask[1:] = cp.any(sortarr[1:] != sortarr[:-1], axis=1)
+    counts = []
+    for i in mask:
+        if i == 1:
+            counts.append(1)
+        else:
+            counts[-1] += 1
+    return sortarr[mask], cp.array(counts)
 
 
 def frequent_single_itemsets(
     data: Data, min_support: int = 0
-) -> Tuple[MultiDimensionalArray, MultiDimensionalArray, Data]:
+) -> Tuple[MultiDimensionalArray, MultiDimensionalArray, Data, MultiDimensionalArray]:
     """
 
     Parameters
@@ -58,7 +84,15 @@ def frequent_single_itemsets(
     else:
         data = data.astype(numpy_or_cupy.bool_)
 
-    columns_support = get_support(data, numpy_or_cupy)
+    # Unique rows
+    if isinstance(data, (cp.ndarray)):
+        data, counts = cupy_unique_axis_0_return_counts_true(data)
+    elif isinstance(data, (np.ndarray)):
+        data, counts = np.unique(data, axis=0, return_counts=True)
+    else:
+        counts = None
+
+    columns_support = get_support(data, numpy_or_cupy, counts)
 
     # Reduce by support
     indices = numpy_or_cupy.arange(max(columns_support.shape))
@@ -80,7 +114,7 @@ def frequent_single_itemsets(
     # Reduce data
     data = data[:, reduced_indices_sorted]
 
-    return indices_matrix, reduced_columns_support_sorted, data
+    return indices_matrix, reduced_columns_support_sorted, data, counts
 
 
 def get_numpy_or_cupy(data: Data) -> ModuleType:
@@ -156,7 +190,10 @@ def generate_candidates(
 
 
 def itemsets_support(
-    data: Data, multiplier_mask_left: List[int], multiplier_mask_right: List[int]
+    data: Data,
+    multiplier_mask_left: List[int],
+    multiplier_mask_right: List[int],
+    counts: MultiDimensionalArray = None,
 ) -> Tuple[Data, MultiDimensionalArray]:
     """Get support for `itemsets` and return sets with minimal `support
 
@@ -168,6 +205,8 @@ def itemsets_support(
 
     multiplier_mask_right: List[int] :
 
+    counts: MultiDimensionalArray :
+        (Default value = None)
 
     Returns
     -------
@@ -183,7 +222,7 @@ def itemsets_support(
     else:
         data = data[:, multiplier_mask_left] * data[:, multiplier_mask_right]
 
-    data_support = get_support(data, numpy_or_cupy)
+    data_support = get_support(data, numpy_or_cupy, counts)
     return data, data_support
 
 

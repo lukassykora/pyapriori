@@ -52,6 +52,9 @@ lint/flake8: ## check style with flake8
 lint/black: ## check style with black
 	black --check pyapriori tests
 
+lint/black/fix: ## fix style with black
+	black pyapriori tests
+
 lint: lint/flake8 lint/black ## check style
 
 test: ## run tests quickly with the default Python
