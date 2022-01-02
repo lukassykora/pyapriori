@@ -53,8 +53,10 @@ def frequent_single_itemsets(
     """
     numpy_or_cupy = get_numpy_or_cupy(data)
 
-    if isinstance(data, cupy_csr_matrix):
-        data = data.astype(float)
+    if isinstance(data, (cupy_csr_matrix)):
+        data = data.astype(numpy_or_cupy.float32)
+    else:
+        data = data.astype(numpy_or_cupy.bool_)
 
     columns_support = get_support(data, numpy_or_cupy)
 
@@ -171,13 +173,17 @@ def itemsets_support(
     -------
 
     """
+    numpy_or_cupy = get_numpy_or_cupy(data)
+    if numpy_or_cupy == cp:
+        mempool = cp.get_default_memory_pool()
+        mempool.free_all_blocks()
 
     if isinstance(data, (csr_matrix, csc_matrix, cupy_csr_matrix)):
         data = data[:, multiplier_mask_left].multiply(data[:, multiplier_mask_right])
     else:
         data = data[:, multiplier_mask_left] * data[:, multiplier_mask_right]
 
-    data_support = get_support(data, get_numpy_or_cupy(data))
+    data_support = get_support(data, numpy_or_cupy)
     return data, data_support
 
 
