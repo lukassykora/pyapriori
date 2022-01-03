@@ -114,6 +114,10 @@ def frequent_single_itemsets(
     else:
         counts = None
 
+    global columns_count
+    columns_count = data.shape[1]
+    data = numpy_or_cupy.packbits(data, axis=1)
+
     return indices_matrix, reduced_columns_support_sorted, data, counts
 
 
@@ -217,12 +221,18 @@ def itemsets_support(
         mempool = cp.get_default_memory_pool()
         mempool.free_all_blocks()
 
+    global columns_count
+    data = numpy_or_cupy.unpackbits(data, count=columns_count, axis=1)
+
     if isinstance(data, (csr_matrix, csc_matrix, cupy_csr_matrix)):
         data = data[:, multiplier_mask_left].multiply(data[:, multiplier_mask_right])
     else:
         data = data[:, multiplier_mask_left] * data[:, multiplier_mask_right]
 
     data_support = get_support(data, numpy_or_cupy, counts)
+    columns_count = data.shape[1]
+    data = numpy_or_cupy.packbits(data, axis=1)
+
     return data, data_support
 
 
@@ -261,7 +271,12 @@ def min_support_set(
 
     over_support_mask = candidates_support >= min_support
 
+    global columns_count
+    data = numpy_or_cupy.unpackbits(data, count=columns_count, axis=1)
     data = data[:, over_support_mask]
+    columns_count = data.shape[1]
+    data = numpy_or_cupy.packbits(data, axis=1)
+
     candidates_support = candidates_support[over_support_mask]
     multiplier_mask_left = numpy_or_cupy.array(multiplier_mask_left)[
         over_support_mask
