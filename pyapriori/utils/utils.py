@@ -84,15 +84,7 @@ def frequent_single_itemsets(
     else:
         data = data.astype(numpy_or_cupy.bool_)
 
-    # Unique rows
-    if isinstance(data, (cp.ndarray)):
-        data, counts = cupy_unique_axis_0_return_counts_true(data)
-    elif isinstance(data, (np.ndarray)):
-        data, counts = np.unique(data, axis=0, return_counts=True)
-    else:
-        counts = None
-
-    columns_support = get_support(data, numpy_or_cupy, counts)
+    columns_support = get_support(data, numpy_or_cupy)
 
     # Reduce by support
     indices = numpy_or_cupy.arange(max(columns_support.shape))
@@ -113,6 +105,14 @@ def frequent_single_itemsets(
 
     # Reduce data
     data = data[:, reduced_indices_sorted]
+
+    # Unique rows
+    if isinstance(data, (cp.ndarray)):
+        data, counts = cupy_unique_axis_0_return_counts_true(data)
+    elif isinstance(data, (np.ndarray)):
+        data, counts = np.unique(data, axis=0, return_counts=True)
+    else:
+        counts = None
 
     return indices_matrix, reduced_columns_support_sorted, data, counts
 
