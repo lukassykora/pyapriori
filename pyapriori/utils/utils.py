@@ -33,14 +33,15 @@ def get_support(
     -------
 
     """
-    if counts is not None:
-        data_support = data * counts[..., None]
-    else:
-        data_support = data
+    global columns_count
+    candidates = indices_matrix = numpy_or_cupy.zeros((columns_count, columns_count))
+    numpy_or_cupy.fill_diagonal(indices_matrix, 1)
+    candidates = candidates.astype(bool)
+    candidates = np.packbits(candidates, axis=1)
+    print(candidates.shape)
+    print(data.shape)
 
-    if isinstance(data_support, (csr_matrix, csc_matrix, cupy_csr_matrix)):
-        return numpy_or_cupy.array(data_support.sum(axis=0)).ravel()
-    return data_support.sum(axis=0)
+    return np.apply_along_axis(lambda candidate:np.sum((np.bitwise_and(data, candidate) == candidate).all(axis=1)), 1, candidates)
 
 
 def cupy_unique_axis_0_return_counts_true(
@@ -84,6 +85,11 @@ def frequent_single_itemsets(
     else:
         data = data.astype(numpy_or_cupy.bool_)
 
+
+    global columns_count
+    columns_count = data.shape[1]
+    data = numpy_or_cupy.packbits(data, axis=1)
+
     columns_support = get_support(data, numpy_or_cupy)
 
     # Reduce by support
@@ -104,19 +110,13 @@ def frequent_single_itemsets(
     indices_matrix = indices_matrix[reduced_indices_sorted].astype(bool)
 
     # Reduce data
+    data = numpy_or_cupy.unpackbits(data, count=columns_count, axis=1)
     data = data[:, reduced_indices_sorted]
-
-    # Unique rows
-    if isinstance(data, (cp.ndarray)):
-        data, counts = cupy_unique_axis_0_return_counts_true(data)
-    elif isinstance(data, (np.ndarray)):
-        data, counts = np.unique(data, axis=0, return_counts=True)
-    else:
-        counts = None
-
-    global columns_count
     columns_count = data.shape[1]
     data = numpy_or_cupy.packbits(data, axis=1)
+
+    # Unique rows
+    counts = None
 
     return indices_matrix, reduced_columns_support_sorted, data, counts
 
@@ -229,9 +229,9 @@ def itemsets_support(
     else:
         data = data[:, multiplier_mask_left] * data[:, multiplier_mask_right]
 
-    data_support = get_support(data, numpy_or_cupy, counts)
     columns_count = data.shape[1]
     data = numpy_or_cupy.packbits(data, axis=1)
+    data_support = get_support(data, numpy_or_cupy, counts)
 
     return data, data_support
 
