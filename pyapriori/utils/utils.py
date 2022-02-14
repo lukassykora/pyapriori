@@ -1,36 +1,25 @@
-from types import ModuleType
 from itertools import combinations
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Set
 
 import cupy as cp
 import numpy as np
-from cupyx.scipy.sparse import csr_matrix as cupy_csr_matrix
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
 
-Data = Union[np.ndarray, cp.ndarray, csr_matrix, csc_matrix, cupy_csr_matrix]
+Data = dict[int, Set[int]]
 MultiDimensionalArray = Union[np.ndarray, cp.ndarray]
 
 
-def get_support(data: Data, numpy_or_cupy: ModuleType) -> MultiDimensionalArray:
+def get_support(data: Data) -> List[int]:
     """Get support
 
     Parameters
     ----------
     data: Data :
 
-    numpy_or_cupy: types.ModuleType('numpy' :
-
-    'cupy') :
-
-
     Returns
     -------
 
     """
-    if isinstance(data, (csr_matrix, csc_matrix, cupy_csr_matrix)):
-        return numpy_or_cupy.array(data.sum(axis=0)).ravel()
-    return data.sum(axis=0)
+    return [len(value) for value in data.values()]
 
 
 def frequent_single_itemsets(
@@ -51,59 +40,16 @@ def frequent_single_itemsets(
 
 
     """
-    numpy_or_cupy = get_numpy_or_cupy(data)
-
-    if isinstance(data, (cupy_csr_matrix)):
-        data = data.astype(numpy_or_cupy.float32)
-    else:
-        data = data.astype(numpy_or_cupy.bool_)
-
-    columns_support = get_support(data, numpy_or_cupy)
-
+    columns_support = get_support(data)
     # Reduce by support
-    indices = numpy_or_cupy.arange(max(columns_support.shape))
-    over_support_mask = columns_support >= min_support
-    reduced_indices = indices[over_support_mask]
-    reduced_columns_support = columns_support[over_support_mask]
-
-    # Sort it by support
-    support_sorted_mask = numpy_or_cupy.argsort(reduced_columns_support)
-    reduced_indices_sorted = reduced_indices[support_sorted_mask]
-    reduced_columns_support_sorted = reduced_columns_support[support_sorted_mask]
-
-    # Indices Matrix
-    matrix_size = len(over_support_mask)
-    indices_matrix = numpy_or_cupy.zeros((matrix_size, matrix_size))
-    numpy_or_cupy.fill_diagonal(indices_matrix, 1)
-    indices_matrix = indices_matrix[reduced_indices_sorted].astype(bool)
-
-    # Reduce data
-    data = data[:, reduced_indices_sorted]
-
-    return indices_matrix, reduced_columns_support_sorted, data
-
-
-def get_numpy_or_cupy(data: Data) -> ModuleType:
-    """
-
-    Parameters
-    ----------
-    data: Data) -> types.ModuleType('numpy' :
-
-    'cupy' :
-
-
-    Returns
-    -------
-
-    """
-    if isinstance(data, (cupy_csr_matrix, cp.ndarray)):
-        return cp
-    return np
+    data = {feature_key: data[feature_key] for feature_key, support in
+            enumerate(columns_support) if support >= min_support}
+    support = [support for support in columns_support if support >= min_support]
+    return support, data
 
 
 def generate_candidates(
-    previous_candidates: MultiDimensionalArray,
+    previous_candidates: List[int],
     previous_multiplier_mask: List[int] = None,
 ) -> Tuple[List[int], List[int]]:
     """Generate candidate set from `previous_candidates` with size `k`
@@ -121,7 +67,7 @@ def generate_candidates(
     """
 
     # number of previous candidates
-    d = previous_candidates.shape[0]
+    d = len(previous_candidates)
 
     # If no previous candidates then return empty arrays
     if d <= 1:
@@ -173,17 +119,9 @@ def itemsets_support(
     -------
 
     """
-    numpy_or_cupy = get_numpy_or_cupy(data)
-    if numpy_or_cupy == cp:
-        mempool = cp.get_default_memory_pool()
-        mempool.free_all_blocks()
-
-    if isinstance(data, (csr_matrix, csc_matrix, cupy_csr_matrix)):
-        data = data[:, multiplier_mask_left].multiply(data[:, multiplier_mask_right])
-    else:
-        data = data[:, multiplier_mask_left] * data[:, multiplier_mask_right]
-
-    data_support = get_support(data, numpy_or_cupy)
+    data = {i: data[left].intersection(data[multiplier_mask_right[i]]) for i, left in
+            enumerate(multiplier_mask_left)}
+    data_support = get_support(data)
     return data, data_support
 
 
@@ -218,21 +156,10 @@ def min_support_set(
 
 
     """
-    numpy_or_cupy = get_numpy_or_cupy(data)
+    # Reduce by support
+    data = {feature_key: data[feature_key] for feature_key, support in
+            enumerate(candidates_support) if support >= min_support}
+    candidates_support = [support for support in candidates_support if support >= min_support]
 
-    over_support_mask = candidates_support >= min_support
 
-    data = data[:, over_support_mask]
-    candidates_support = candidates_support[over_support_mask]
-    multiplier_mask_left = numpy_or_cupy.array(multiplier_mask_left)[
-        over_support_mask
-    ].tolist()
-    multiplier_mask_right = numpy_or_cupy.array(multiplier_mask_right)[
-        over_support_mask
-    ].tolist()
-
-    candidates = (
-        previous_candidates[multiplier_mask_left, :]
-        + previous_candidates[multiplier_mask_right, :]
-    )
     return candidates, candidates_support, multiplier_mask_left, data
