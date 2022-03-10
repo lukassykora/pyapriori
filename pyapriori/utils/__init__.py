@@ -3,6 +3,4 @@ from pyapriori.utils.utils import (
     generate_candidates,
     itemsets_support,
     min_support_set,
-    Data,
-    get_numpy_or_cupy,
 )

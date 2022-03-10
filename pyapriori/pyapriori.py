@@ -1,5 +1,6 @@
 """Main module."""
-from typing import List
+import numpy as np
+from numpy.typing import ArrayLike
 from pyapriori.utils.utils import (
     frequent_single_itemsets,
     generate_candidates,
@@ -15,7 +16,7 @@ class PyApriori:
         self.min_support = min_support
         self.min_length = min_length
 
-    def fit(self, data: List[set]) -> tuple:
+    def fit(self, data) -> tuple:
         """
 
         Parameters
@@ -32,8 +33,8 @@ class PyApriori:
         )
         k = 2
         multiplier_mask = None
-        result = []
-        result_support = []
+        result = np.array([])
+        result_support = np.array([])
         if self.min_length < 2:
             result = candidates
             result_support = candidates_support
@@ -59,7 +60,7 @@ class PyApriori:
                 self.min_support,
             )
             if k >= self.min_length:
-                result += candidates
-                result_support += candidates_support
+                result = np.append(result, candidates)
+                result_support = np.append(result_support, candidates_support)
             k += 1
         return result, result_support
