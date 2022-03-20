@@ -1,4 +1,5 @@
 """Main module."""
+import time
 import numpy as np
 from numpy.typing import ArrayLike
 from pyapriori.utils.utils import (
@@ -28,9 +29,16 @@ class PyApriori:
         -------
 
         """
+        t1 = 0
+        t2 = 0
+        t3 = 0
+        t4 = 0
+        start = time.time()
         candidates, candidates_support, data = frequent_single_itemsets(
             data, self.min_support
         )
+        end = time.time()
+        t1 += end - start
         k = 2
         multiplier_mask = None
         result = np.array([])
@@ -39,14 +47,21 @@ class PyApriori:
             result = candidates
             result_support = candidates_support
         while len(candidates) > 0:
+            start = time.time()
             multiplier_mask = generate_candidates(
                 candidates, multiplier_mask
             )
+            end = time.time()
+            t2 += end - start
             if len(multiplier_mask) == 0:
                 break
+            start = time.time()
             data, candidates_support = itemsets_support(
                 data, multiplier_mask
             )
+            end = time.time()
+            t3 += end - start
+            start = time.time()
             (
                 candidates,
                 candidates_support,
@@ -59,8 +74,15 @@ class PyApriori:
                 multiplier_mask,
                 self.min_support,
             )
+            end = time.time()
+            t4 += end - start
             if k >= self.min_length:
                 result = np.append(result, candidates)
                 result_support = np.append(result_support, candidates_support)
             k += 1
+        print('time')
+        print(t1)
+        print(t2)
+        print(t3)
+        print(t4)
         return result, result_support

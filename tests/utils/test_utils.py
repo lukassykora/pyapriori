@@ -11,15 +11,6 @@ from pyapriori import utils
 
 
 class TestUtils(unittest.TestCase):
-    @parameterized.expand(
-        [
-            (np.array,),
-            (cp.array,),
-            (csr_matrix,),
-            (csc_matrix,),
-            (lambda x: cupy_csr_matrix(csr_matrix(x)),),
-        ]
-    )
     def test_frequent_single_itemsets(self, type_array):
         transactions = [
             [True, True, True, False, False, False],

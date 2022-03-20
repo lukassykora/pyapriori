@@ -59,7 +59,11 @@ def frequent_single_itemsets(
         return {a}
 
     transform_to_sets = np.vectorize(create_sets)
-    candidates = transform_to_sets(np.arange(len(support_mask))[support_mask])
+
+    if len(np.arange(len(support_mask))[support_mask]) > 0:
+        candidates = transform_to_sets(np.arange(len(support_mask))[support_mask])
+    else:
+        candidates = np.array[{}]
     return candidates, support, data
 
 
@@ -126,14 +130,17 @@ def itemsets_support(
     -------
 
     """
-
-    # data = [data[left].intersection(data[right]) for left, right in multiplier_mask]
+    #data = np.array([data[left].intersection(data[right]) for left, right in multiplier_mask])
     def intersection(a):
         return data[a[0]].intersection(data[a[1]])
 
     intersection_vect = np.vectorize(intersection)
 
-    data = intersection_vect(multiplier_mask)
+    if len(multiplier_mask) > 0:
+        data = intersection_vect(multiplier_mask)
+    else:
+        data = np.array[{}]
+
     data_support = get_support(data)
 
     return data, data_support
@@ -176,5 +183,8 @@ def min_support_set(
     def plus(a):
         return previous_candidates[a[0]].union(previous_candidates[a[1]])
     plus_vect = np.vectorize(plus)
-    candidates = plus_vect(multiplier_mask)
+    if len(multiplier_mask) > 0:
+        candidates = plus_vect(multiplier_mask)
+    else:
+        candidates = np.array({})
     return candidates, candidates_support, multiplier_mask, data
