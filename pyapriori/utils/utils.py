@@ -28,7 +28,7 @@ def get_support(data):
 
     """
     # return [len(value) for value in data]
-    return vectorized_len(data)
+    return
 
 
 def frequent_single_itemsets(
