@@ -1,12 +1,15 @@
 """Main module."""
 import time
 import numpy as np
+import cupy as cp
 from numpy.typing import ArrayLike
 from pyapriori.utils.utils import (
     frequent_single_itemsets,
     generate_candidates,
     itemsets_support,
     min_support_set,
+    get_numpy_or_cupy,
+    frequent_sliced_itemsets,
 )
 
 
@@ -17,7 +20,7 @@ class PyApriori:
         self.min_support = min_support
         self.min_length = min_length
 
-    def fit(self, data) -> tuple:
+    def fit(self, data: Data, **kwargs):
         """
 
         Parameters
@@ -29,60 +32,75 @@ class PyApriori:
         -------
 
         """
-        t1 = 0
-        t2 = 0
-        t3 = 0
-        t4 = 0
-        start = time.time()
-        candidates, candidates_support, data = frequent_single_itemsets(
-            data, self.min_support
+        numpy_or_cupy = get_numpy_or_cupy(data)
+
+        if 'is_bitwise' in kwargs:
+            is_bitwise = kwargs['is_bitwise']
+            number_of_columns = kwargs['number_of_columns']
+        else:
+            is_bitwise = False
+            number_of_columns = data.shape[1]
+
+        if 'is_ordered' in kwargs:
+            is_ordered = kwargs['is_ordered']
+        else:
+            is_ordered = True
+
+        if 'is_numba' in kwargs:
+            is_numba = kwargs['is_numba']
+        else:
+            is_numba = True
+
+        transactions, candidates, candidates_support = frequent_single_itemsets(
+            data, numpy_or_cupy, number_of_columns, self.min_support, is_ordered, is_bitwise, is_numba
         )
-        end = time.time()
-        t1 += end - start
-        k = 2
-        multiplier_mask = None
-        result = np.array([])
-        result_support = np.array([])
-        if self.min_length < 2:
-            result = candidates
-            result_support = candidates_support
-        while len(candidates) > 0:
-            start = time.time()
-            multiplier_mask = generate_candidates(
-                candidates, multiplier_mask
-            )
-            end = time.time()
-            t2 += end - start
-            if len(multiplier_mask) == 0:
-                break
-            start = time.time()
-            data, candidates_support = itemsets_support(
-                data, multiplier_mask
-            )
-            end = time.time()
-            t3 += end - start
-            start = time.time()
-            (
-                candidates,
-                candidates_support,
-                multiplier_mask,
-                data,
-            ) = min_support_set(
-                candidates,
-                candidates_support,
-                data,
-                multiplier_mask,
-                self.min_support,
-            )
-            end = time.time()
-            t4 += end - start
-            if k >= self.min_length:
-                result = np.append(result, candidates)
-                result_support = np.append(result_support, candidates_support)
-            k += 1
-        print('time')
-        print(t1)
-        print(t2)
-        print(t3)
-        print(t4)
-        return result, result_support
+
+        prefix_list = []
+        candidates_list = []
+        transactions_list = []
+
+        frequent_itemsets = []
+        stop_dict = {}
+
+        add_candidates(prefix_list, candidates_list, transactions_list, [], candidates, transactions,
+                       self.min_length)
+
+        add_result(frequent_itemsets, [], candidates, candidates_support)
+
+        while len(t_list) > 0:
+            prev_prefix = prefix_list.pop(0)
+            prev_candidates = candidates_list.pop(0)
+            prev_transactions = transactions_list.pop(0)
+
+            candidates_len = len(prev_candidates)
+
+            for i, element in enumerate(prev_candidates[:-1]):
+                new_prefix = prev_prefix + [element]
+                reduced_candidates = prev_candidates[i + 1:]
+
+                if tuple(new_prefix[1:]) in stop_dict:
+                    prev_stop = stop_dict[tuple(new_prefix[1:])]
+                    _, interse, _ = numpy_or_cupy.intersect1d(reduced_candidates, prev_stop, assume_unique=True,
+                                                              return_indices=True)
+                    reduced_candidates = numpy_or_cupy.delete(reduced_candidates, interse)
+                else:
+                    prev_stop = numpy_or_cupy.array([])
+
+                candidates_support, new_transactions = frequent_sliced_itemsets(array, i, reduced_candidates, data)
+
+                support_mask = candidates_support >= self.min_support
+
+                # STOP
+                new_stop = reduced_candidates[~support_mask]
+                stop_dict[tuple(new_prefix)] = np.concatenate((new_stop, prev_stop))
+
+                # Reduce by support
+                if not is_bitwise:
+                    new_transactions = new_transactions[:, support_mask]
+                new_candidates = reduced_candidates[support_mask]
+                candidates_support = candidates_support[support_mask]
+
+                add_candidates(prefix_list, candidates_list, transactions_list, new_prefix, new_candidates,
+                               new_transactions, self.min_length)
+
+                add_result(frequent_itemsets, new_prefix, candidates, candidates_support)
