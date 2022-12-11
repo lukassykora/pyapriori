@@ -76,6 +76,7 @@ class PyApriori:
                 new_prefix = prev_prefix + [element]
                 reduced_candidates = prev_candidates[i + 1:]
 
+                # STOP
                 if tuple(new_prefix[1:]) in stop_dict:
                     prev_stop = stop_dict[tuple(new_prefix[1:])]
                     _, interse, _ = numpy_or_cupy.intersect1d(reduced_candidates, prev_stop, assume_unique=True,

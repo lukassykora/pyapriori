@@ -134,7 +134,7 @@ def add_result(frequent_itemsets, new_prefix, new_candidates, candidates_support
 
 
 def support_sliced_columns(array, i, reduced_candidates):
-    mask = array[:, i]  # 15
+    mask = array[:, i]
     new_array = array[:, reduced_candidates][mask, :]
     array_support = new_array.sum(axis=0)
     return array_support, new_array
