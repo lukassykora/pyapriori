@@ -15,9 +15,10 @@ from pyapriori.utils.utils import (
 class PyApriori:
     """ """
 
-    def __init__(self, min_support: int = 2, min_length: int = 2):
+    def __init__(self, min_support: int = 2, min_length: int = 1, max_length: int = None):
         self.min_support = min_support
         self.min_length = min_length
+        self.max_length = max_length
 
     def fit(self, data, **kwargs):
         """
@@ -62,9 +63,9 @@ class PyApriori:
         stop_dict = {}
 
         add_candidates(prefix_list, candidates_list, transactions_list, [], candidates, transactions,
-                       self.min_length)
+                       self.max_length)
 
-        add_result(frequent_itemsets, [], candidates, candidates_support)
+        add_result(frequent_itemsets, [], candidates, candidates_support, self.min_length)
 
         while len(transactions_list) > 0:
             prev_prefix = prefix_list.pop(0)
@@ -100,7 +101,7 @@ class PyApriori:
                 candidates_support = candidates_support[support_mask]
 
                 add_candidates(prefix_list, candidates_list, transactions_list, new_prefix, new_candidates,
-                               new_transactions, self.min_length)
+                               new_transactions, self.max_length)
 
-                add_result(frequent_itemsets, new_prefix, new_candidates, candidates_support)
+                add_result(frequent_itemsets, new_prefix, new_candidates, candidates_support, self.min_length)
         return frequent_itemsets

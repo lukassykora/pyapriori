@@ -118,15 +118,17 @@ def frequent_single_itemsets(data: Data, numpy_or_cupy, number_of_columns: int, 
 
 
 def add_candidates(prefix_list, candidates_list, transactions_list, prefix, candidates, transactions,
-                   min_length: int = 1):
-    if len(candidates) < 2: #len(prefix) > min_length or
+                   max_length: int = None):
+    if len(candidates) < 2 or len(prefix) >= max_length:
         return
     prefix_list.append(prefix)
     candidates_list.append(candidates)
     transactions_list.append(transactions)
 
 
-def add_result(frequent_itemsets, new_prefix, new_candidates, candidates_support):
+def add_result(frequent_itemsets, new_prefix, new_candidates, candidates_support, min_length: int = 1):
+    if len(new_prefix) >= min_length:
+        return
     for j, row in enumerate(new_candidates):
         frequent_itemsets.append((new_prefix + [row], candidates_support[j]))
 
