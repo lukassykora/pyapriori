@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple, List, Union
 from numpy.typing import ArrayLike
 from types import ModuleType
 from cupyx.scipy.sparse import csr_matrix as cupy_csr_matrix
@@ -7,6 +7,7 @@ from scipy.sparse import csr_matrix
 from numba import njit
 
 import numpy as np
+import cupy as cp
 
 Data = Union[np.ndarray, cp.ndarray, csr_matrix, csc_matrix, cupy_csr_matrix]
 
@@ -52,10 +53,10 @@ def support_all_columns(data: Data):
 
 
 def slice_array_columns(array, columns):
-    return data[:, columns]
+    return array[:, columns]
 
 
-def frequent_single_itemsets(data: Data, numpy_or_cupy: ModulType, number_of_columns: int, min_support: int = 0,
+def frequent_single_itemsets(data: Data, numpy_or_cupy, number_of_columns: int, min_support: int = 0,
                              is_ordered: bool = True, is_bitwise: bool = False, is_numba: bool = False):
     """
 
@@ -118,7 +119,7 @@ def frequent_single_itemsets(data: Data, numpy_or_cupy: ModulType, number_of_col
 
 def add_candidates(prefix_list, candidates_list, transactions_list, prefix, candidates, transactions,
                    min_length: int = 1):
-    if len(prefix) > min_length or len(candidates) < 2:
+    if len(candidates) < 2: #len(prefix) > min_length or
         return
     prefix_list.append(prefix)
     candidates_list.append(candidates)
@@ -149,7 +150,7 @@ def bitwise_support_sliced_columns(array, i, reduced_candidates):
     return res
 
 
-def frequent_sliced_itemsets(array, i, reduced_candidates, data):
+def frequent_sliced_itemsets(array, i, reduced_candidates, data, is_bitwise, is_numba):
     if is_bitwise:
         if is_numba:
             support = njit()(bitwise_support_sliced_columns)(data, i, reduced_candidates)

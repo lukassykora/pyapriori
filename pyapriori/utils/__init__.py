@@ -1,6 +1,7 @@
 from pyapriori.utils.utils import (
     frequent_single_itemsets,
-    generate_candidates,
-    itemsets_support,
-    min_support_set,
+    get_numpy_or_cupy,
+    frequent_sliced_itemsets,
+    add_candidates,
+    add_result,
 )

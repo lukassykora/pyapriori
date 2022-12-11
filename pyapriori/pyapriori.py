@@ -5,11 +5,10 @@ import cupy as cp
 from numpy.typing import ArrayLike
 from pyapriori.utils.utils import (
     frequent_single_itemsets,
-    generate_candidates,
-    itemsets_support,
-    min_support_set,
     get_numpy_or_cupy,
     frequent_sliced_itemsets,
+    add_candidates,
+    add_result,
 )
 
 
@@ -20,7 +19,7 @@ class PyApriori:
         self.min_support = min_support
         self.min_length = min_length
 
-    def fit(self, data: Data, **kwargs):
+    def fit(self, data, **kwargs):
         """
 
         Parameters
@@ -67,12 +66,10 @@ class PyApriori:
 
         add_result(frequent_itemsets, [], candidates, candidates_support)
 
-        while len(t_list) > 0:
+        while len(transactions_list) > 0:
             prev_prefix = prefix_list.pop(0)
             prev_candidates = candidates_list.pop(0)
             prev_transactions = transactions_list.pop(0)
-
-            candidates_len = len(prev_candidates)
 
             for i, element in enumerate(prev_candidates[:-1]):
                 new_prefix = prev_prefix + [element]
@@ -86,7 +83,9 @@ class PyApriori:
                 else:
                     prev_stop = numpy_or_cupy.array([])
 
-                candidates_support, new_transactions = frequent_sliced_itemsets(array, i, reduced_candidates, data)
+                candidates_support, new_transactions = frequent_sliced_itemsets(prev_transactions, i,
+                                                                                reduced_candidates, data, is_bitwise,
+                                                                                is_numba)
 
                 support_mask = candidates_support >= self.min_support
 
@@ -103,4 +102,5 @@ class PyApriori:
                 add_candidates(prefix_list, candidates_list, transactions_list, new_prefix, new_candidates,
                                new_transactions, self.min_length)
 
-                add_result(frequent_itemsets, new_prefix, candidates, candidates_support)
+                add_result(frequent_itemsets, new_prefix, new_candidates, candidates_support)
+        return frequent_itemsets
